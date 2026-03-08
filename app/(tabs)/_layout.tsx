@@ -52,6 +52,7 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: "Chat",
+          href: user?.role === 'manager' ? null : undefined,
           tabBarIcon: ({ color, size }) => (
             <MessageCircle size={size} color={color} />
           ),

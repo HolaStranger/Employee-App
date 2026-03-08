@@ -60,10 +60,6 @@ export default function SignInScreen() {
     loginMutation.mutate();
   };
 
-  const handleGoToSignUp = () => {
-    router.push({ pathname: '/signup', params: { role } });
-  };
-
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -163,27 +159,13 @@ export default function SignInScreen() {
               )}
             </TouchableOpacity>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity
-              style={styles.signUpButton}
-              onPress={handleGoToSignUp}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.signUpButtonText}>Create New Account</Text>
-            </TouchableOpacity>
-
             <View style={styles.demoCredentials}>
               <Text style={styles.demoTitle}>Demo Credentials:</Text>
               <Text style={styles.demoText}>
                 Email:{' '}
                 {role === 'manager'
-                  ? 'manager@technova.com'
-                  : 'employee@technova.com'}
+                  ? 'ali@manager.technova.com'
+                  : 'vikneswari4527773@gmail.com'}
               </Text>
               <Text style={styles.demoText}>Password: demo123</Text>
             </View>

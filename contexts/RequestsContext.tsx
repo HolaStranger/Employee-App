@@ -7,7 +7,7 @@ import { useAuth } from "./AuthContext";
  * ✅ IMPORTANT:
  * Change this if your laptop IP changes.
  */
-const API_BASE_URL = "http://192.168.1.105:4000";
+const API_BASE_URL = 'http://172.20.10.3:4000';
 
 async function readErrorMessage(res: Response) {
   try {

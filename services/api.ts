@@ -5,7 +5,7 @@ import { LeaveRequest, Request, RoomBooking, User, UserRole } from '@/types';
 // ============================================
 
 // ✅ Correct base URL (no double http, no trailing slash needed)
-const API_BASE_URL = 'http://192.168.1.105:4000';
+const API_BASE_URL = "http://172.20.10.3:4000";
 
 // If you later add JWT auth, you can store token and send in headers
 // const API_KEY = '';

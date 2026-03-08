@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 
 const AUTH_STORAGE_KEY = '@technova_auth_user';
-const API_BASE_URL = 'http://192.168.1.105:4000';
+const API_BASE_URL = 'http://172.20.10.3:4000'; // Change if your backend URL changes
 
 type LoginPayload = {
   email: string;

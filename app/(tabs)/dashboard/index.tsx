@@ -4,21 +4,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRequests } from '@/contexts/RequestsContext';
 import { useRouter } from 'expo-router';
 import {
-    AlertCircle,
-    Building2,
-    Calendar,
-    CheckCircle,
-    ClipboardList,
-    Clock,
-    DoorOpen,
+  AlertCircle,
+  Building2,
+  Calendar,
+  CalendarDays,
+  CheckCircle,
+  ClipboardList,
+  Clock,
+  DoorOpen,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,7 +31,7 @@ export default function DashboardScreen() {
   const stats = useMemo(() => {
     const userRequests = isManager 
       ? requests 
-      : requests.filter(r => r.userId === user?.id);
+      : requests.filter(r => r.userId === user?.userId);
     
     const pending = userRequests.filter(r => r.status === 'pending').length;
     const approved = userRequests.filter(r => r.status === 'approved').length;
@@ -73,6 +74,11 @@ export default function DashboardScreen() {
     });
   };
 
+  const handleTeamCalendar = () => {
+    console.log('[Dashboard] Navigate to Team Calendar');
+    // TODO: Implement Team Calendar screen
+  };
+
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -105,23 +111,27 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           
-          <DashboardCard
-            title="Apply Leave"
-            subtitle="Request time off from work"
-            icon={Calendar}
-            iconColor={Colors.info}
-            onPress={handleApplyLeave}
-            testID="dashboard-apply-leave"
-          />
-          
-          <DashboardCard
-            title="Book Meeting Room"
-            subtitle="Reserve a space for your meeting"
-            icon={DoorOpen}
-            iconColor={Colors.success}
-            onPress={handleBookRoom}
-            testID="dashboard-book-room"
-          />
+          {!isManager && (
+            <>
+              <DashboardCard
+                title="Apply Leave"
+                subtitle="Request time off from work"
+                icon={Calendar}
+                iconColor={Colors.info}
+                onPress={handleApplyLeave}
+                testID="dashboard-apply-leave"
+              />
+              
+              <DashboardCard
+                title="Book Meeting Room"
+                subtitle="Reserve a space for your meeting"
+                icon={DoorOpen}
+                iconColor={Colors.success}
+                onPress={handleBookRoom}
+                testID="dashboard-book-room"
+              />
+            </>
+          )}
           
           <DashboardCard
             title="View My Requests"
@@ -132,18 +142,28 @@ export default function DashboardScreen() {
             testID="dashboard-view-requests"
           />
 
-          {/* Manager-only: Pending Approvals */}
+          {/* Manager-only Actions */}
           {isManager && (
-            <DashboardCard
-              title="Pending Approvals"
-              subtitle="Review employee requests"
-              icon={AlertCircle}
-              iconColor={Colors.warning}
-              count={stats.pendingApprovals}
-              countLabel="pending"
-              onPress={handlePendingApprovals}
-              testID="dashboard-pending-approvals"
-            />
+            <>
+              <DashboardCard
+                title="Pending Approvals"
+                subtitle="Review employee requests"
+                icon={AlertCircle}
+                iconColor={Colors.warning}
+                count={stats.pendingApprovals}
+                countLabel="pending"
+                onPress={handlePendingApprovals}
+                testID="dashboard-pending-approvals"
+              />
+              <DashboardCard
+                title="Team Calendar"
+                subtitle="View team availability"
+                icon={CalendarDays}
+                iconColor={Colors.info}
+                onPress={handleTeamCalendar}
+                testID="dashboard-team-calendar"
+              />
+            </>
           )}
         </View>
 
