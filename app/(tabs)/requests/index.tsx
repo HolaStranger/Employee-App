@@ -28,7 +28,15 @@ const FILTERS: { id: FilterType; label: string }[] = [
 
 export default function RequestsScreen() {
   const { user, isManager } = useAuth();
-  const { requests, pendingRequests, approveRequest, refetch, isLoading } = useRequests();
+  const { 
+    requests, 
+    pendingRequests, 
+    approveRequest, 
+    refetch, 
+    isLoading,
+    isTeamView,
+    setIsTeamView 
+  } = useRequests();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -96,6 +104,30 @@ export default function RequestsScreen() {
 
   return (
     <View style={styles.container}>
+      {isManager && (
+        <View style={styles.viewToggleContainer}>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, !isTeamView && styles.viewToggleButtonActive]}
+            onPress={() => setIsTeamView(false)}
+          >
+            <Text style={[styles.viewToggleText, !isTeamView && styles.viewToggleTextActive]}>My Requests</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, isTeamView && styles.viewToggleButtonActive]}
+            onPress={() => setIsTeamView(true)}
+          >
+            <View style={styles.teamToggleContent}>
+              <Text style={[styles.viewToggleText, isTeamView && styles.viewToggleTextActive]}>Team Clearance</Text>
+              {pendingRequests.length > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{pendingRequests.length}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: Colors.infoLight }]}>
@@ -184,6 +216,57 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  viewToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 4,
+    gap: 4,
+  },
+  viewToggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  viewToggleButtonActive: {
+    backgroundColor: Colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  viewToggleText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+  },
+  viewToggleTextActive: {
+    color: Colors.primary,
+  },
+  teamToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  badge: {
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    color: Colors.textInverse,
+    fontSize: 11,
+    fontWeight: '700' as const,
   },
   loadingContainer: {
     flex: 1,

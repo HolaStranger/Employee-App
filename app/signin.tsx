@@ -4,7 +4,7 @@ import { UserRole } from '@/types';
 import { useMutation } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -32,12 +32,17 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginMutation = useMutation({
     mutationFn: async () => {
       if (!email.trim() || !password.trim()) {
         throw new Error('Please enter email and password');
       }
+
+      setIsSubmitting(true);
+      setErrorMsg(null);
 
       // ✅ FIX: AuthContext login expects ONE payload object
       return login({
@@ -52,11 +57,16 @@ export default function SignInScreen() {
     },
     onError: (error: any) => {
       console.error('[SignIn] Login failed:', error);
-      Alert.alert('Login Failed', error?.message || 'Invalid credentials');
+      setErrorMsg(error?.message || 'Invalid credentials. Please try again.');
+      setIsSubmitting(false);
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
     },
   });
 
   const handleSignIn = () => {
+    if (isSubmitting || loginMutation.isPending) return;
     loginMutation.mutate();
   };
 
@@ -104,7 +114,10 @@ export default function SignInScreen() {
                 <TextInput
                   style={styles.input}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   placeholder="Enter your email"
                   placeholderTextColor={Colors.textLight}
                   keyboardType="email-address"
@@ -122,7 +135,10 @@ export default function SignInScreen() {
                 <TextInput
                   style={styles.input}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   placeholder="Enter your password"
                   placeholderTextColor={Colors.textLight}
                   secureTextEntry={!showPassword}
@@ -142,13 +158,20 @@ export default function SignInScreen() {
               </View>
             </View>
 
+            {errorMsg && (
+              <View style={styles.errorContainer}>
+                <AlertCircle size={16} color={Colors.error} />
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            )}
+
             <TouchableOpacity
               style={[
                 styles.signInButton,
-                loginMutation.isPending && styles.buttonDisabled,
+                (isSubmitting || loginMutation.isPending) && styles.buttonDisabled,
               ]}
               onPress={handleSignIn}
-              disabled={loginMutation.isPending}
+              disabled={isSubmitting || loginMutation.isPending}
               activeOpacity={0.8}
               testID="signin-button"
             >
@@ -268,4 +291,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   demoText: { fontSize: 12, color: Colors.info, marginBottom: 2 },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.errorLight,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: Colors.error + '20',
+  },
+  errorText: {
+    fontSize: 13,
+    color: Colors.error,
+    fontWeight: '500' as const,
+    flex: 1,
+  },
 });

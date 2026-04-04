@@ -1,6 +1,7 @@
 import EditRequestModal from '@/components/EditRequestModal';
 import MessageBubble from '@/components/MessageBubble';
 import QuickActionChip from '@/components/QuickActionChip';
+import TypingIndicator from '@/components/TypingIndicator';
 import { Colors } from '@/constants/colors';
 import { useRequests } from '@/contexts/RequestsContext';
 import { ConfirmationData, Message } from '@/types';
@@ -47,10 +48,10 @@ type ChatState =
 
 const INITIAL_MESSAGES: Message[] = [
   {
-    id: 'asst-1',
+    id: `asst-initial-${Date.now()}`,
     type: 'assistant',
     content:
-      "Hello! I'm your TechNova assistant. I can help you apply for leave or book meeting rooms.",
+      "Hi there! 👋 I'm your TechNova assistant. I'm here to help you manage your day—whether you need to plan some well-deserved time off or find the perfect meeting room. What can I help you with today?",
     timestamp: new Date().toISOString(),
   },
 ];
@@ -79,6 +80,18 @@ export default function ChatScreen() {
   } | null>(null);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+
+  /* ----------------------------- */
+  /* Thinking Simulator */
+  /* ----------------------------- */
+
+  const simulateThinking = async (duration = 1500) => {
+    setIsTyping(true);
+    await new Promise((resolve) => setTimeout(resolve, duration));
+    setIsTyping(false);
+  };
 
   /* ----------------------------- */
   /* Mutations */
@@ -86,13 +99,28 @@ export default function ChatScreen() {
 
   const leaveMutation = useMutation({
     mutationFn: createLeaveRequest,
-    onSuccess: () =>
-      addAssistantMessage('✅ Leave request submitted successfully.'),
+    onMutate: () => setIsSubmitting(true),
+    onSuccess: () => {
+      setPendingConfirmation(null);
+      addAssistantMessage('✅ Leave request submitted successfully.');
+    },
+    onError: (error: any) => {
+      addAssistantMessage(`❌ Failed to submit leave request: ${error.message || 'Unknown error'}`);
+    },
+    onSettled: () => setIsSubmitting(false),
   });
 
   const roomMutation = useMutation({
     mutationFn: createRoomBooking,
-    onSuccess: () => addAssistantMessage('✅ Room booked successfully.'),
+    onMutate: () => setIsSubmitting(true),
+    onSuccess: () => {
+      setPendingConfirmation(null);
+      addAssistantMessage('✅ Room booked successfully.');
+    },
+    onError: (error: any) => {
+      addAssistantMessage(`❌ Failed to book room: ${error.message || 'Unknown error'}`);
+    },
+    onSettled: () => setIsSubmitting(false),
   });
 
   /* ----------------------------- */
@@ -101,7 +129,7 @@ export default function ChatScreen() {
 
   const addUserMessage = (text: string) => {
     const msg: Message = {
-      id: `user-${Date.now()}`,
+      id: `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       type: 'user',
       content: text,
       timestamp: new Date().toISOString(),
@@ -115,7 +143,7 @@ export default function ChatScreen() {
     confirmationData?: ConfirmationData
   ) => {
     const msg: Message = {
-      id: `asst-${Date.now()}`,
+      id: `asst-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       type: 'assistant',
       content: text,
       timestamp: new Date().toISOString(),
@@ -133,14 +161,18 @@ export default function ChatScreen() {
   /* Quick Actions */
   /* ----------------------------- */
 
-  const handleQuickAction = (action: string) => {
+  const handleQuickAction = async (action: string) => {
     if (action === 'leave') {
       setShowLeaveOptions(true);
-      addAssistantMessage('Select leave type');
+      addUserMessage('I want to apply for leave.');
+      await simulateThinking(1000);
+      addAssistantMessage("I'd be happy to help with that! What type of leave are you planning to take? (Annual, Medical, etc.)");
     }
 
     if (action === 'room') {
-      addAssistantMessage('How many people will attend the meeting?');
+      addUserMessage('I need to book a meeting room.');
+      await simulateThinking(1200);
+      addAssistantMessage('Sure thing! Let’s get that sorted. How many people will be attending the meeting?');
       setChatState('room_people');
     }
   };
@@ -149,7 +181,7 @@ export default function ChatScreen() {
   /* Chat Logic */
   /* ----------------------------- */
 
-  const processUserInput = (text: string) => {
+  const processUserInput = async (text: string) => {
     if (chatState === 'leave_reason') {
       const finalData: ConfirmationData = {
         requestType: 'leave',
@@ -159,15 +191,9 @@ export default function ChatScreen() {
         reason: text,
       };
 
+      await simulateThinking(1800);
       addAssistantMessage(
-        `Leave Request
-
-Type: ${finalData.leaveType}
-Start: ${finalData.startDate}
-End: ${finalData.endDate}
-Reason: ${finalData.reason}
-
-Confirm submission?`,
+        `Got it! I've prepared your leave summary below. Does everything look correct before I submit it for you?`,
         finalData
       );
 
@@ -179,13 +205,15 @@ Confirm submission?`,
       const people = parseInt(text);
 
       if (isNaN(people)) {
-        addAssistantMessage('Please enter a valid number.');
+        await simulateThinking(800);
+        addAssistantMessage("Oops, I didn't quite catch that. Could you please enter a number?");
         return;
       }
 
       setRoomDraft({ people });
 
-      addAssistantMessage('What date do you want to book? (YYYY-MM-DD)');
+      await simulateThinking(1200);
+      addAssistantMessage(`Perfect, a room for ${people}. And which date should I look for? (Please use YYYY-MM-DD)`);
       setChatState('room_date');
       return;
     }
@@ -194,16 +222,17 @@ Confirm submission?`,
       const regex = /^\d{4}-\d{2}-\d{2}$/;
 
       if (!regex.test(text)) {
-        addAssistantMessage('Please use YYYY-MM-DD format.');
+        await simulateThinking(800);
+        addAssistantMessage("Sorry about that! Could you please use the YYYY-MM-DD format? (e.g., 2026-05-15)");
         return;
       }
 
       const people = roomDraft.people;
-
       const room = ROOMS.find((r) => r.capacity >= people);
 
+      await simulateThinking(2000);
       if (!room) {
-        addAssistantMessage('No room available.');
+        addAssistantMessage("I'm so sorry, but I couldn't find a room large enough for your team on that date. Would you like to try a smaller group or a different day?");
         setChatState('idle');
         return;
       }
@@ -215,9 +244,8 @@ Confirm submission?`,
       });
 
       setShowRoomSlots(room.slots);
-
       addAssistantMessage(
-        `Recommended room: ${room.name}. Select a time slot.`
+        `I found a great match! I recommend the ${room.name}. Which of these available time slots works best for you?`
       );
 
       setChatState('room_slot');
@@ -227,26 +255,27 @@ Confirm submission?`,
 
   /* ----------------------------- */
 
-  const handleManualDateEntry = (date: string) => {
+  const handleManualDateEntry = async (date: string) => {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
 
     if (!regex.test(date)) {
-      addAssistantMessage('Please use YYYY-MM-DD format.');
+      await simulateThinking(800);
+      addAssistantMessage("I'm sorry, I need the date in YYYY-MM-DD format to process this. Could you try again?");
       return;
     }
 
     if (dateField === 'start') {
       setLeaveDraft((prev: any) => ({ ...prev, startDate: date }));
-      addAssistantMessage(`Start date selected: ${date}`);
-      addAssistantMessage('When will your leave end? (YYYY-MM-DD)');
+      await simulateThinking(1200);
+      addAssistantMessage(`Noted! Your leave starts on ${date}. And when is your last day of leave?`);
       setDateField('end');
       return;
     }
 
     if (dateField === 'end') {
       setLeaveDraft((prev: any) => ({ ...prev, endDate: date }));
-      addAssistantMessage(`End date selected: ${date}`);
-      addAssistantMessage('Please provide a reason for leave');
+      await simulateThinking(1200);
+      addAssistantMessage('Almost done! Could you share a quick reason for the leave? (e.g., Vacation, Family, etc.)');
       setChatState('leave_reason');
     }
   };
@@ -274,7 +303,7 @@ Confirm submission?`,
   /* ----------------------------- */
 
   const handleConfirm = () => {
-    if (!pendingConfirmation) return;
+    if (!pendingConfirmation || isSubmitting || leaveMutation.isPending || roomMutation.isPending) return;
 
     const data = pendingConfirmation.data;
 
@@ -306,6 +335,7 @@ Confirm submission?`,
       <MessageBubble
         message={item}
         onConfirm={showActions ? handleConfirm : undefined}
+        isLoading={showActions && (isSubmitting || leaveMutation.isPending || roomMutation.isPending)}
       />
     );
   };
@@ -337,6 +367,7 @@ Confirm submission?`,
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+        ListFooterComponent={isTyping ? <TypingIndicator /> : null}
       />
 
       {/* Leave Options */}
@@ -347,14 +378,13 @@ Confirm submission?`,
             <TouchableOpacity
               key={type}
               style={styles.optionButton}
-              onPress={() => {
+              onPress={async () => {
                 setShowLeaveOptions(false);
-
                 setLeaveDraft({ leaveType: type });
-
                 addUserMessage(type);
 
-                addAssistantMessage('When will your leave start? (YYYY-MM-DD)');
+                await simulateThinking(1500);
+                addAssistantMessage("Got it! And when would you like your leave to begin? (YYYY-MM-DD)");
                 setDateField('start');
                 setChatState('leave_start');
               }}
@@ -373,9 +403,8 @@ Confirm submission?`,
             <TouchableOpacity
               key={slot}
               style={styles.optionButton}
-              onPress={() => {
+              onPress={async () => {
                 setShowRoomSlots([]);
-
                 addUserMessage(slot);
 
                 const room = roomDraft.room;
@@ -390,14 +419,9 @@ Confirm submission?`,
                   purpose: 'Meeting',
                 };
 
+                await simulateThinking(1800);
                 addAssistantMessage(
-                  `Room Booking
-
-Room: ${room.name}
-Date: ${roomDraft.date}
-Time: ${slot}
-
-Confirm booking?`,
+                  `Awesome choice! I've put together the details for the ${room.name} below. Does it look all set?`,
                   finalData
                 );
               }}

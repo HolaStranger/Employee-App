@@ -39,7 +39,8 @@ export default function RequestCard({ request, isManager, onApprove, onReject, i
   };
 
   const formatLeaveType = (type: string) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
+    const formatted = type.charAt(0).toUpperCase() + type.slice(1);
+    return formatted.toLowerCase().includes('leave') ? formatted : `${formatted} Leave`;
   };
 
   return (
@@ -55,9 +56,7 @@ export default function RequestCard({ request, isManager, onApprove, onReject, i
           </View>
           <View style={styles.headerText}>
             <Text style={styles.title} numberOfLines={1}>
-              {isLeave 
-                ? `${formatLeaveType(request.leaveType)} Leave` 
-                : request.roomName}
+              {isLeave ? formatLeaveType(request.leaveType) : request.roomName}
             </Text>
             <Text style={styles.subtitle}>
               {isManager ? request.userName : (isLeave ? 'Leave Request' : 'Room Booking')}

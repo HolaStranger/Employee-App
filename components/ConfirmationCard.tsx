@@ -18,7 +18,8 @@ export default function ConfirmationCard({ data, onConfirm, onEdit, onCancel, is
 
   const formatLeaveType = (type?: string) => {
     if (!type) return '';
-    return type.charAt(0).toUpperCase() + type.slice(1) + ' Leave';
+    const formatted = type.charAt(0).toUpperCase() + type.slice(1);
+    return formatted.toLowerCase().includes('leave') ? formatted : `${formatted} Leave`;
   };
 
   return (
@@ -103,6 +104,7 @@ export default function ConfirmationCard({ data, onConfirm, onEdit, onCancel, is
                 style={[styles.button, styles.cancelButton]}
                 onPress={onCancel}
                 activeOpacity={0.7}
+                disabled={isLoading}
               >
                 <X size={16} color={Colors.error} />
                 <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -112,6 +114,7 @@ export default function ConfirmationCard({ data, onConfirm, onEdit, onCancel, is
                 style={[styles.button, styles.editButton]}
                 onPress={onEdit}
                 activeOpacity={0.7}
+                disabled={isLoading}
               >
                 <Pencil size={16} color={Colors.primary} />
                 <Text style={styles.editButtonText}>Edit</Text>
@@ -121,6 +124,7 @@ export default function ConfirmationCard({ data, onConfirm, onEdit, onCancel, is
                 style={[styles.button, styles.confirmButton]}
                 onPress={onConfirm}
                 activeOpacity={0.7}
+                disabled={isLoading}
               >
                 <Check size={16} color={Colors.textInverse} />
                 <Text style={styles.confirmButtonText}>Confirm</Text>
